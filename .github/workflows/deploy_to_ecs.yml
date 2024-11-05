@@ -1,0 +1,97 @@
+name: Deploy to ECS with CodeDeploy via Docker Hub
+
+on:
+  push:
+    branches:
+      - main  # Trigger on push to main branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    env:
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}  # Add this in GitHub Secrets
+      DOCKER_REPOSITORY: <your-dockerhub-repo-name>
+      CODEDEPLOY_APPLICATION: codedeployapp
+      CODEDEPLOY_DEPLOYMENT_GROUP: codedeploydeplgroup
+      ECS_CLUSTER_NAME: application_cluster
+      ECS_SERVICE_NAME: frontend
+      IMAGE_TAG: ${{ github.sha }}
+
+    steps:
+    - name: Checkout source code
+      uses: actions/checkout@v2
+
+    - name: Set up AWS CLI
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: Build Docker image
+      run: |
+        docker build -t ${{ env.DOCKER_REPOSITORY }}:$IMAGE_TAG .
+
+    - name: Push Docker image to Docker Hub
+      run: |
+        docker tag ${{ env.DOCKER_REPOSITORY }}:$IMAGE_TAG ${{ secrets.DOCKER_USERNAME }}/${{ env.DOCKER_REPOSITORY }}:$IMAGE_TAG
+        docker push ${{ secrets.DOCKER_USERNAME }}/${{ env.DOCKER_REPOSITORY }}:$IMAGE_TAG
+
+    - name: Create AppSpec and Task Definition files
+      run: |
+        echo "
+        version: 0.0
+        Resources:
+          - TargetService:
+              Type: AWS::ECS::Service
+              Properties:
+                TaskDefinition: arn:aws:ecs:${{ env.AWS_REGION }}:${{ secrets.AWS_ACCOUNT_ID }}:task-definition/${{ env.ECS_SERVICE_NAME }}
+                LoadBalancerInfo:
+                  ContainerName: app
+                  ContainerPort: 80
+        " > appspec.yaml
+
+        echo "
+        {
+          \"family\": \"${{ env.ECS_SERVICE_NAME }}\",
+          \"containerDefinitions\": [
+            {
+              \"name\": \"app\",
+              \"image\": \"${{ secrets.DOCKER_USERNAME }}/${{ env.DOCKER_REPOSITORY }}:${{ env.IMAGE_TAG }}\",
+              \"cpu\": 256,
+              \"memory\": 512,
+              \"essential\": true,
+              \"portMappings\": [
+                {
+                  \"containerPort\": 80,
+                  \"hostPort\": 80
+                }
+              ]
+            }
+          ]
+        }
+        " > taskdef.json
+
+    - name: Register Task Definition
+      run: |
+        aws ecs register-task-definition --cli-input-json file://taskdef.json
+
+    - name: Update ECS Service with CodeDeploy
+      run: |
+        aws deploy create-deployment \
+          --application-name ${{ env.CODEDEPLOY_APPLICATION }} \
+          --deployment-group-name ${{ env.CODEDEPLOY_DEPLOYMENT_GROUP }} \
+          --revision revisionType=AppSpecContent,s3Location={bucket=<YOUR_S3_BUCKET>,key=appspec.yaml,bundleType=YAML}
+
+    - name: Wait for Deployment Completion
+      run: |
+        DEPLOYMENT_ID=$(aws deploy get-deployment-group --application-name ${{ env.CODEDEPLOY_APPLICATION }} --deployment-group-name ${{ env.CODEDEPLOY_DEPLOYMENT_GROUP }} --query 'deploymentGroupInfo.lastSuccessfulDeployment.deploymentId' --output text)
+        aws deploy wait deployment-successful --deployment-id $DEPLOYMENT_ID
