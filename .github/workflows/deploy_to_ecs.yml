@@ -106,9 +106,9 @@ jobs:
 
     - name: Update ECS Service with CodeDeploy
       run: |
-        aws deploy create-deployment --cli-input-json file://deployment-revision.json --region ${{ env.AWS_REGION }}
+        aws deploy create-deployment --cli-input-json file://deployment-revision.json --region us-west-2
 
     - name: Wait for Deployment Completion
       run: |
-        DEPLOYMENT_ID=$(aws deploy get-deployment-group --application-name ${{ env.CODE_DEPLOY_APPLICATION }} --deployment-group-name ${{ env.CODEDEPLOY_DEPLOYMENT_GROUP }} --query 'deploymentGroupInfo.lastSuccessfulDeployment.deploymentId' --output text --region ${{ env.AWS_REGION }})
-        aws deploy wait deployment-successful --deployment-id $DEPLOYMENT_ID --region ${{ env.AWS_REGION }}
+        DEPLOYMENT_ID=$(aws deploy get-deployment-group --application-name ${{ env.CODE_DEPLOY_APPLICATION }} --deployment-group-name ${{ env.CODEDEPLOY_DEPLOYMENT_GROUP }} --query 'deploymentGroupInfo.lastSuccessfulDeployment.deploymentId' --output text --region us-west-2)
+        aws deploy wait deployment-successful --deployment-id $DEPLOYMENT_ID --region us-west-2
