@@ -12,11 +12,11 @@ jobs:
     env:
       AWS_REGION: ${{ secrets.AWS_REGION }}
       AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}  # Add this in GitHub Secrets
-      DOCKER_REPOSITORY: <your-dockerhub-repo-name>
-      CODEDEPLOY_APPLICATION: codedeployapp
-      CODEDEPLOY_DEPLOYMENT_GROUP: codedeploydeplgroup
-      ECS_CLUSTER_NAME: application_cluster
-      ECS_SERVICE_NAME: frontend
+      DOCKER_REPOSITORY: ${{ secrets.DOCKER_REPOSITORY }} 
+      CODEDEPLOY_APPLICATION: ${{ secrets.CODEDEPLOY_APPLICATION }}  # Add to GitHub Secrets
+      CODEDEPLOY_DEPLOYMENT_GROUP: ${{ secrets.CODEDEPLOY_DEPLOYMENT_GROUP }}  # Add to GitHub Secrets
+      ECS_CLUSTER_NAME: ${{ secrets.ECS_CLUSTER_NAME }}  # Add to GitHub Secrets
+      ECS_SERVICE_NAME: ${{ secrets.ECS_SERVICE_NAME }}
       IMAGE_TAG: ${{ github.sha }}
 
     steps:
