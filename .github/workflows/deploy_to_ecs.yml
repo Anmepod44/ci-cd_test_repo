@@ -95,7 +95,7 @@ jobs:
         aws deploy create-deployment \
           --application-name frontend-deploy \
           --deployment-group-name ${{ env.CODEDEPLOY_DEPLOYMENT_GROUP }} \
-          --revision "revisionType=S3Location,s3Location={bucket=${{ env.S3_BUCKET }},key=appspec.yaml,bundleType=YAML}" \
+          --revision revisionType=S3,s3Location={bucket=deployment-bckt,key=appspec.yaml,bundleType=YAML}" \
           --region us-west-2
 
     - name: Wait for Deployment Completion
