@@ -3,7 +3,7 @@ name: Deploy to ECS with CodeDeploy via Docker Hub
 on:
   push:
     branches:
-      - main  # Trigger on push to main branch added some changes.
+      - main  # Trigger on push to main branch
 
 jobs:
   deploy:
@@ -14,7 +14,6 @@ jobs:
       AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
       CODEDEPLOY_DEPLOYMENT_GROUP: "frontend-deploy-group"
       CODE_DEPLOY_APPLICATION: "frontend-deploy"
-      AWS_DEFAULT_REGION: "us-west-2"
       DOCKER_REPOSITORY: "nyarangamarvin545/trial"
       ECS_CLUSTER_NAME: "application_cluster"
       ECS_SERVICE_NAME: "frontend"
@@ -90,13 +89,24 @@ jobs:
       run: |
         aws s3 cp appspec.yaml s3://${{ env.S3_BUCKET }}/appspec.yaml --region ${{ env.AWS_REGION }}
 
+    - name: Create Deployment Revision JSON
+      run: |
+        echo '{
+          "applicationName": "'"${{ env.CODE_DEPLOY_APPLICATION }}"'",
+          "deploymentGroupName": "'"${{ env.CODEDEPLOY_DEPLOYMENT_GROUP }}"'",
+          "revision": {
+            "revisionType": "S3",
+            "s3Location": {
+              "bucket": "'"${{ env.S3_BUCKET }}"'",
+              "key": "appspec.yaml",
+              "bundleType": "YAML"
+            }
+          }
+        }' > deployment-revision.json
+
     - name: Update ECS Service with CodeDeploy
       run: |
-        aws deploy create-deployment \
-          --application-name frontend-deploy \
-          --deployment-group-name ${{ env.CODEDEPLOY_DEPLOYMENT_GROUP }} \
-          --revision revisionType=S3,s3Location={bucket=deployment-bckt,key=appspec.yaml,bundleType=YAML} \
-          --region us-west-2
+        aws deploy create-deployment --cli-input-json file://deployment-revision.json --region ${{ env.AWS_REGION }}
 
     - name: Wait for Deployment Completion
       run: |
