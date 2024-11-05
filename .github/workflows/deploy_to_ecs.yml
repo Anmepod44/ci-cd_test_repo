@@ -18,6 +18,7 @@ jobs:
       ECS_CLUSTER_NAME: "application_cluster"
       ECS_SERVICE_NAME: "frontend"
       IMAGE_TAG: ${{ github.sha }}
+      S3_BUCKET: "deployment-bckt"
 
     steps:
     - name: Checkout source code
@@ -84,12 +85,16 @@ jobs:
       run: |
         aws ecs register-task-definition --cli-input-json file://taskdef.json
 
+    - name: Upload AppSpec file to S3
+      run: |
+        aws s3 cp appspec.yaml s3://${{ env.S3_BUCKET }}/appspec.yaml
+
     - name: Update ECS Service with CodeDeploy
       run: |
         aws deploy create-deployment \
           --application-name ${{ env.CODE_DEPLOY_APPLICATION }} \
           --deployment-group-name ${{ env.CODEDEPLOY_DEPLOYMENT_GROUP }} \
-          --revision revisionType=AppSpecContent,s3Location={bucket=deployment-bckt,key=appspec.yaml,bundleType=YAML}
+          --revision "revisionType=S3Location,s3Location={bucket=${{ env.S3_BUCKET }},key=appspec.yaml,bundleType=YAML}"
 
     - name: Wait for Deployment Completion
       run: |
