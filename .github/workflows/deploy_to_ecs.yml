@@ -3,7 +3,7 @@ name: Deploy to ECS with CodeDeploy via Docker Hub
 on:
   push:
     branches:
-      - main  # Trigger on push to main branch
+      - main
 
 jobs:
   deploy:
@@ -46,20 +46,8 @@ jobs:
         docker tag ${{ env.DOCKER_REPOSITORY }}:${{ env.IMAGE_TAG }} ${{ env.DOCKER_REPOSITORY }}:${{ env.IMAGE_TAG }}
         docker push ${{ env.DOCKER_REPOSITORY }}:${{ env.IMAGE_TAG }}
 
-    - name: Create AppSpec and Task Definition files
+    - name: Create Task Definition JSON
       run: |
-        echo "
-        version: 0.0
-        Resources:
-          - TargetService:
-              Type: AWS::ECS::Service
-              Properties:
-                TaskDefinition: arn:aws:ecs:us-west-2:${{ secrets.AWS_ACCOUNT_ID }}:task-definition/${{ env.ECS_SERVICE_NAME }}
-                LoadBalancerInfo:
-                  ContainerName: app
-                  ContainerPort: 80
-        " > appspec.yaml
-
         echo "
         {
           \"family\": \"${{ env.ECS_SERVICE_NAME }}\",
@@ -82,8 +70,24 @@ jobs:
         " > taskdef.json
 
     - name: Register Task Definition
+      id: register_task
       run: |
-        aws ecs register-task-definition --cli-input-json file://taskdef.json --region us-west-2
+        TASK_DEF_ARN=$(aws ecs register-task-definition --cli-input-json file://taskdef.json --region us-west-2 --query 'taskDefinition.taskDefinitionArn' --output text)
+        echo "TASK_DEF_ARN=$TASK_DEF_ARN" >> $GITHUB_ENV
+
+    - name: Update AppSpec with Task Definition ARN
+      run: |
+        echo "
+        version: 0.0
+        Resources:
+          - TargetService:
+              Type: AWS::ECS::Service
+              Properties:
+                TaskDefinition: ${TASK_DEF_ARN}
+                LoadBalancerInfo:
+                  ContainerName: app
+                  ContainerPort: 80
+        " > appspec.yaml
 
     - name: Upload AppSpec file to S3
       run: |
@@ -99,6 +103,7 @@ jobs:
           --region us-west-2 \
           --query 'deploymentId' \
           --output text)
+        echo "Deployment ID: $DEPLOYMENT_ID"
         echo "deployment_id=$DEPLOYMENT_ID" >> $GITHUB_OUTPUT
 
     - name: Wait for Deployment Completion
