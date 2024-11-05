@@ -92,7 +92,7 @@ jobs:
     - name: Update ECS Service with CodeDeploy
       run: |
         aws deploy create-deployment \
-          --application-name ${{ env.CODE_DEPLOY_APPLICATION }} \
+          --application-name frontend-deploy \
           --deployment-group-name ${{ env.CODEDEPLOY_DEPLOYMENT_GROUP }} \
           --revision "revisionType=S3Location,s3Location={bucket=${{ env.S3_BUCKET }},key=appspec.yaml,bundleType=YAML}" \
           --region ${{ env.AWS_REGION }}
