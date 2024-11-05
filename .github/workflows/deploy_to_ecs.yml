@@ -11,12 +11,12 @@ jobs:
 
     env:
       AWS_REGION: ${{ secrets.AWS_REGION }}
-      AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}  # Add this in GitHub Secrets
-      CODEDEPLOY_DEPLOYMENT_GROUP: "frontend-deploy-group"  # CodeDeploy deployment group
-      CODE_DEPLOY_APPLICATION: "frontend-deploy"             # CodeDeploy application name
-      DOCKER_REPOSITORY: "nyarangamarvin545/trial"                          # Docker repository name (Docker Hub or other registry)
-      ECS_CLUSTER_NAME: "application_cluster"             # ECS cluster name
-      ECS_SERVICE_NAME: "frontend"                        # ECS service name
+      AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+      CODEDEPLOY_DEPLOYMENT_GROUP: "frontend-deploy-group"
+      CODE_DEPLOY_APPLICATION: "frontend-deploy"
+      DOCKER_REPOSITORY: "nyarangamarvin545/trial"
+      ECS_CLUSTER_NAME: "application_cluster"
+      ECS_SERVICE_NAME: "frontend"
       IMAGE_TAG: ${{ github.sha }}
 
     steps:
@@ -38,11 +38,11 @@ jobs:
 
     - name: Build Docker image
       run: |
-        docker build -t ${{ env.DOCKER_REPOSITORY }}:$IMAGE_TAG .
+        docker build -t ${{ env.DOCKER_REPOSITORY }}:${{ env.IMAGE_TAG }} .
 
     - name: Push Docker image to Docker Hub
       run: |
-        docker tag ${{ env.DOCKER_REPOSITORY }}:$IMAGE_TAG ${{ secrets.DOCKER_USERNAME }}/${{ env.DOCKER_REPOSITORY }}:$IMAGE_TAG
+        docker tag ${{ env.DOCKER_REPOSITORY }}:${{ env.IMAGE_TAG }} ${{ secrets.DOCKER_USERNAME }}/${{ env.DOCKER_REPOSITORY }}:${{ env.IMAGE_TAG }}
         docker push ${{ env.DOCKER_REPOSITORY }}:${{ env.IMAGE_TAG }}
 
     - name: Create AppSpec and Task Definition files
@@ -87,11 +87,11 @@ jobs:
     - name: Update ECS Service with CodeDeploy
       run: |
         aws deploy create-deployment \
-          --application-name ${{ env.CODEDEPLOY_APPLICATION }} \
+          --application-name ${{ env.CODE_DEPLOY_APPLICATION }} \
           --deployment-group-name ${{ env.CODEDEPLOY_DEPLOYMENT_GROUP }} \
           --revision revisionType=AppSpecContent,s3Location={bucket=deployment-bckt,key=appspec.yaml,bundleType=YAML}
 
     - name: Wait for Deployment Completion
       run: |
-        DEPLOYMENT_ID=$(aws deploy get-deployment-group --application-name ${{ env.CODEDEPLOY_APPLICATION }} --deployment-group-name ${{ env.CODEDEPLOY_DEPLOYMENT_GROUP }} --query 'deploymentGroupInfo.lastSuccessfulDeployment.deploymentId' --output text)
+        DEPLOYMENT_ID=$(aws deploy get-deployment-group --application-name ${{ env.CODE_DEPLOY_APPLICATION }} --deployment-group-name ${{ env.CODEDEPLOY_DEPLOYMENT_GROUP }} --query 'deploymentGroupInfo.lastSuccessfulDeployment.deploymentId' --output text)
         aws deploy wait deployment-successful --deployment-id $DEPLOYMENT_ID
