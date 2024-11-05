@@ -43,7 +43,7 @@ jobs:
 
     - name: Push Docker image to Docker Hub
       run: |
-        docker tag ${{ env.DOCKER_REPOSITORY }}:${{ env.IMAGE_TAG }} ${{ secrets.DOCKER_USERNAME }}/${{ env.DOCKER_REPOSITORY }}:${{ env.IMAGE_TAG }}
+        docker tag ${{ env.DOCKER_REPOSITORY }}:${{ env.IMAGE_TAG }} ${{ env.DOCKER_REPOSITORY }}:${{ env.IMAGE_TAG }}
         docker push ${{ env.DOCKER_REPOSITORY }}:${{ env.IMAGE_TAG }}
 
     - name: Create AppSpec and Task Definition files
@@ -66,7 +66,7 @@ jobs:
           \"containerDefinitions\": [
             {
               \"name\": \"app\",
-              \"image\": \"${{ secrets.DOCKER_USERNAME }}/${{ env.DOCKER_REPOSITORY }}:${{ env.IMAGE_TAG }}\",
+              \"image\": \"${{ env.DOCKER_REPOSITORY }}:${{ env.IMAGE_TAG }}\",
               \"cpu\": 256,
               \"memory\": 512,
               \"essential\": true,
@@ -89,26 +89,20 @@ jobs:
       run: |
         aws s3 cp appspec.yaml s3://${{ env.S3_BUCKET }}/appspec.yaml --region ${{ env.AWS_REGION }}
 
-    - name: Create Deployment Revision JSON
+    - name: Create Deployment
+      id: create_deployment
       run: |
-        echo '{
-          "applicationName": "'"${{ env.CODE_DEPLOY_APPLICATION }}"'",
-          "deploymentGroupName": "'"${{ env.CODEDEPLOY_DEPLOYMENT_GROUP }}"'",
-          "revision": {
-            "revisionType": "S3",
-            "s3Location": {
-              "bucket": "'"${{ env.S3_BUCKET }}"'",
-              "key": "appspec.yaml",
-              "bundleType": "YAML"
-            }
-          }
-        }' > deployment-revision.json
-
-    - name: Update ECS Service with CodeDeploy
-      run: |
-        aws deploy create-deployment --cli-input-json file://deployment-revision.json --region us-west-2
+        DEPLOYMENT_ID=$(aws deploy create-deployment \
+          --application-name ${{ env.CODE_DEPLOY_APPLICATION }} \
+          --deployment-group-name ${{ env.CODEDEPLOY_DEPLOYMENT_GROUP }} \
+          --revision revisionType=S3,s3Location={bucket=${{ env.S3_BUCKET }},key=appspec.yaml,bundleType=YAML} \
+          --region ${{ env.AWS_REGION }} \
+          --query 'deploymentId' \
+          --output text)
+        echo "deployment_id=$DEPLOYMENT_ID" >> $GITHUB_ENV
 
     - name: Wait for Deployment Completion
       run: |
-        DEPLOYMENT_ID=$(aws deploy get-deployment-group --application-name ${{ env.CODE_DEPLOY_APPLICATION }} --deployment-group-name ${{ env.CODEDEPLOY_DEPLOYMENT_GROUP }} --query 'deploymentGroupInfo.lastSuccessfulDeployment.deploymentId' --output text --region us-west-2)
-        aws deploy wait deployment-successful --deployment-id $DEPLOYMENT_ID --region us-west-2
+        aws deploy wait deployment-successful \
+          --deployment-id ${{ env.deployment_id }} \
+          --region ${{ env.AWS_REGION }}
