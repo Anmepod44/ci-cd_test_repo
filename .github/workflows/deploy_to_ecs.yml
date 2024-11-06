@@ -75,29 +75,24 @@ jobs:
         TASK_DEF_ARN=$(aws ecs register-task-definition --cli-input-json file://taskdef.json --region us-west-2 --query 'taskDefinition.taskDefinitionArn' --output text)
         echo "TASK_DEF_ARN=$TASK_DEF_ARN" >> $GITHUB_ENV
 
-
-        Here's the updated part of your build file to match the new structure of the appspec.yml file, including the additional applicationName, deploymentGroupName, and the placeholder format:
-
-          yaml
-          Copy code
-          - name: Update AppSpec with Task Definition ARN
-            run: |
-              echo "
-              applicationName: "frontend-deploy"
-              deploymentGroupName: "frontend-deploy-group"
-              revision:
-                revisionType: AppSpecContent
-                appSpecContent:
-                  content: |
-                    version: 0.0
-                    Resources:
-                      - TargetService:
-                          Type: AWS::ECS::Service
-                          Properties:
-                            TaskDefinition: ${TASK_DEF_ARN}
-                            LoadBalancerInfo:
-                              ContainerName: "app"
-                              ContainerPort: 80
+    - name: Update AppSpec with Task Definition ARN
+      run: |
+          echo "
+            applicationName: "frontend-deploy"
+            deploymentGroupName: "frontend-deploy-group"
+            revision:
+              revisionType: AppSpecContent
+              appSpecContent:
+                content: |
+                  version: 0.0
+                  Resources:
+                    - TargetService:
+                        Type: AWS::ECS::Service
+                        Properties:
+                          TaskDefinition: ${TASK_DEF_ARN}
+                          LoadBalancerInfo:
+                            ContainerName: "app"
+                            ContainerPort: 80
               " > appspec.yaml
 
     - name: Upload AppSpec file to S3
