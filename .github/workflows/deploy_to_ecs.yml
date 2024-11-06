@@ -18,7 +18,7 @@ jobs:
       ECS_CLUSTER_NAME: "application_cluster"
       ECS_SERVICE_NAME: "frontend"
       IMAGE_TAG: ${{ github.sha }}
-      S3_BUCKET: "deployment-bckt"
+      S3_BUCKET: "deployment-bckt-europe"
 
     steps:
     - name: Checkout source code
