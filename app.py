@@ -1,7 +1,7 @@
 from flask import Flask
 
 app = Flask(__name__)
-#made some change made to this code.
+#made some change made to this code. Welcome to page.
 @app.route("/")
 def home():
     return "<h1>Hello, this is a test page for the Flask application, welcome! Wenesday.  </h1>"
