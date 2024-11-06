@@ -75,8 +75,8 @@ jobs:
         TASK_DEF_ARN=$(aws ecs register-task-definition --cli-input-json file://taskdef.json --region us-west-2 --query 'taskDefinition.taskDefinitionArn' --output text)
         echo "TASK_DEF_ARN=$TASK_DEF_ARN" >> $GITHUB_ENV
 
-        - name: Update AppSpec with Task Definition ARN
-        run: |
+    - name: Update AppSpec with Task Definition ARN
+      run: |
           echo '
             applicationName: "frontend-deploy"
             deploymentGroupName: "frontend-deploy-group"
