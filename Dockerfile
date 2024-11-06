@@ -1,22 +1,10 @@
-# Use the official Python image
-FROM python:3.8-slim
+# Use the official Nginx image as the base image
+FROM nginx:alpine
 
-# Set working directory
-WORKDIR /app
+# Create a simple HTML page
+RUN echo "<!DOCTYPE html><html><head><title>Hello World</title></head><body><h1>Hello, World!</h1><p>This is a simple web server running in a Docker container on port 80.</p></body></html>" > /usr/share/nginx/html/index.html
 
-# Copy requirements.txt and install dependencies
-COPY requirements.txt requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy the application code
-COPY app.py app.py
-
-# Expose port 80 to allow external access
+# Expose port 80
 EXPOSE 80
 
-# Set environment variables for Flask
-ENV FLASK_APP=app.py
-ENV FLASK_RUN_HOST=0.0.0.0
-
-# Run the application
-CMD ["flask", "run", "--port=80"]
+# Nginx will automatically start serving the HTML file on port 80
