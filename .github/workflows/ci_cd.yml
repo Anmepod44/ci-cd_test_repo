@@ -1,4 +1,4 @@
-name: Push to AWS ECR and Trigger CodeDeploy
+name: Deploy to AWS ECR and CodeDeploy
 
 on:
   push:
@@ -12,12 +12,13 @@ jobs:
 
     env:
       AWS_REGION: eu-north-1
-      ECR_REGISTRY: 038462779186.dkr.ecr.eu-north-1.amazonaws.com
-      ECR_REPOSITORY: frontend-app
+      AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+      ECR_REGISTRY: "${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com"
+      ECR_REPOSITORY: "frontend-app"
       IMAGE_TAG: ${{ github.sha }}
-      CODEDEPLOY_DEPLOYMENT_GROUP: "frontend-deploy-group"
-      CODE_DEPLOY_APPLICATION: "frontend-deploy"
       S3_BUCKET: "deployment-bckt-europe"
+      CODE_DEPLOY_APPLICATION: "frontend-deploy"
+      CODEDEPLOY_DEPLOYMENT_GROUP: "frontend-deploy-group"
 
     steps:
     - name: Checkout source code
@@ -32,33 +33,36 @@ jobs:
 
     - name: Log in to Amazon ECR
       run: |
-        aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ env.ECR_REGISTRY }}
+        aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY
 
     - name: Build Docker image
       run: |
-        docker build -t ${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }} .
+        docker build -t $ECR_REPOSITORY:$IMAGE_TAG .
 
-    - name: Tag Docker image for ECR
+    - name: Tag Docker image
       run: |
-        docker tag ${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }} ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
+        docker tag $ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
     - name: Push Docker image to Amazon ECR
       run: |
-        docker push ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+    - name: Save Image URI to File
+      run: |
+        echo "imageUri: ${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}" > imagedetails.json
 
     - name: Upload Image Details to S3
       run: |
-        echo "imageUri: ${env.ECR_REGISTRY}/${env.ECR_REPOSITORY}:${env.IMAGE_TAG}" > imagedetails.json
-        aws s3 cp imagedetails.json s3://${{ env.S3_BUCKET }}/imagedetails.json --region ${{ env.AWS_REGION }}
+        aws s3 cp imagedetails.json s3://$S3_BUCKET/imagedetails.json --region $AWS_REGION
 
     - name: Create Deployment in CodeDeploy
       id: create_deployment
       run: |
         DEPLOYMENT_ID=$(aws deploy create-deployment \
-          --application-name ${{ env.CODE_DEPLOY_APPLICATION }} \
-          --deployment-group-name ${{ env.CODEDEPLOY_DEPLOYMENT_GROUP }} \
-          --revision "{\"revisionType\": \"S3\", \"s3Location\": {\"bucket\": \"${{ env.S3_BUCKET }}\", \"key\": \"imagedetails.json\", \"bundleType\": \"JSON\"}}" \
-          --region ${{ env.AWS_REGION }} \
+          --application-name $CODE_DEPLOY_APPLICATION \
+          --deployment-group-name $CODEDEPLOY_DEPLOYMENT_GROUP \
+          --revision "{\"revisionType\": \"S3\", \"s3Location\": {\"bucket\": \"$S3_BUCKET\", \"key\": \"imagedetails.json\", \"bundleType\": \"JSON\"}}" \
+          --region $AWS_REGION \
           --query 'deploymentId' \
           --output text)
         echo "Deployment ID: $DEPLOYMENT_ID"
@@ -68,4 +72,4 @@ jobs:
       run: |
         aws deploy wait deployment-successful \
           --deployment-id ${{ steps.create_deployment.outputs.deployment_id }} \
-          --region ${{ env.AWS_REGION }}
+          --region $AWS_REGION
