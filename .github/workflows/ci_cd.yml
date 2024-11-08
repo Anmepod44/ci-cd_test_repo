@@ -13,7 +13,7 @@ jobs:
     env:
       AWS_REGION: eu-north-1
       AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
-      ECR_REGISTRY: "${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com"
+      ECR_REGISTRY: "${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.eu-north-1.amazonaws.com"
       ECR_REPOSITORY: "frontend-app"
       IMAGE_TAG: ${{ github.sha }}
       S3_BUCKET: "deployment-bckt-europe"
