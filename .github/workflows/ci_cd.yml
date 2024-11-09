@@ -20,7 +20,7 @@ jobs:
       ECS_SERVICE_NAME: "frontend"
       IMAGE_TAG: ${{ github.sha }}
       S3_BUCKET: "deployment-bckt-europe"
-      TASK_DEFINITION_ARN: arn:aws:ecs:eu-north-1:038462779186:task-definition/frontend-task:10
+      TASK_DEFINITION_ARN: arn:aws:ecs:eu-north-1:038462779186:task-definition/frontend-task:11
 
     steps:
     - name: Checkout source code
@@ -43,33 +43,33 @@ jobs:
       run: |
         docker build -t ${{ env.DOCKER_REPOSITORY }}:${{ env.IMAGE_TAG }} .
 
-    - name: Push Docker image to ecr
+    - name: Push Docker image to dockerhub
       run: |
         docker tag ${{ env.DOCKER_REPOSITORY }}:${{ env.IMAGE_TAG }} ${{ env.DOCKER_REPOSITORY }}:${{ env.IMAGE_TAG }}
         docker push ${{ env.DOCKER_REPOSITORY }}:${{ env.IMAGE_TAG }}
 
-    - name: Create Task Definition JSON
-      run: |
-        echo "
-        {
-          \"family\": \"${{ env.ECS_SERVICE_NAME }}\",
-          \"containerDefinitions\": [
-            {
-              \"name\": \"app\",
-              \"image\": \"${{ env.DOCKER_REPOSITORY }}:${{ env.IMAGE_TAG }}\",
-              \"cpu\": 256,
-              \"memory\": 256,
-              \"essential\": true,
-              \"portMappings\": [
-                {
-                  \"containerPort\": 80
+    # - name: Create Task Definition JSON
+    #   run: |
+    #     echo "
+    #     {
+    #       \"family\": \"${{ env.ECS_SERVICE_NAME }}\",
+    #       \"containerDefinitions\": [
+    #         {
+    #           \"name\": \"app\",
+    #           \"image\": \"${{ env.DOCKER_REPOSITORY }}:${{ env.IMAGE_TAG }}\",
+    #           \"cpu\": 256,
+    #           \"memory\": 256,
+    #           \"essential\": true,
+    #           \"portMappings\": [
+    #             {
+    #               \"containerPort\": 80
                   
-                }
-              ]
-            }
-          ]
-        }
-        " > taskdef.json
+    #             }
+    #           ]
+    #         }
+    #       ]
+    #     }
+    #     " > taskdef.json
 
     # - name: Register Task Definition commented out
     #   id: register_task
@@ -85,7 +85,7 @@ jobs:
           - TargetService:
               Type: AWS::ECS::Service
               Properties:
-                TaskDefinition: arn:aws:ecs:eu-north-1:038462779186:task-definition/frontend-task:10
+                TaskDefinition: arn:aws:ecs:eu-north-1:038462779186:task-definition/frontend-task:11
                 LoadBalancerInfo:
                   ContainerName: app
                   ContainerPort: 80
