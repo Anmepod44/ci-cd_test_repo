@@ -21,7 +21,7 @@ jobs:
       ECS_SERVICE_NAME: "frontend"
       IMAGE_TAG: latest
       S3_BUCKET: "deployment-bckt-europe"
-      TASK_DEFINITION_ARN: arn:aws:ecs:eu-north-1:038462779186:task-definition/frontend-task:15
+      TASK_DEFINITION_ARN: arn:aws:ecs:eu-north-1:038462779186:task-definition/frontend-task:16
 
     steps:
     - name: Checkout source code
@@ -58,7 +58,7 @@ jobs:
           - TargetService:
               Type: AWS::ECS::Service
               Properties:
-                TaskDefinition: arn:aws:ecs:eu-north-1:038462779186:task-definition/frontend-task:15
+                TaskDefinition: arn:aws:ecs:eu-north-1:038462779186:task-definition/frontend-task:16
                 LoadBalancerInfo:
                   ContainerName: app
                   ContainerPort: 80
