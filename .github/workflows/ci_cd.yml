@@ -49,25 +49,7 @@ jobs:
     - name: Push Docker image to Amazon ECR
       run: |
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-
-    - name: Update AppSpec with Task Definition ARN
-      run: |
-        echo "
-        version: 0.0
-        Resources:
-          - TargetService:
-              Type: AWS::ECS::Service
-              Properties:
-                TaskDefinition: arn:aws:ecs:eu-north-1:038462779186:task-definition/frontend-task:16
-                LoadBalancerInfo:
-                  ContainerName: app
-                  ContainerPort: 80
-        " > appspec.yaml
-
-    - name: Upload AppSpec file to S3
-      run: |
-        aws s3 cp appspec.yaml s3://${{ env.S3_BUCKET }}/appspec.yaml --region us-west-2
-
+        
     - name: Create Deployment
       id: create_deployment
       run: |
