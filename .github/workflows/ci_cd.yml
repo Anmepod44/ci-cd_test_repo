@@ -16,11 +16,11 @@ jobs:
       CODEDEPLOY_DEPLOYMENT_GROUP: "frontend-deploy-group"
       CODE_DEPLOY_APPLICATION: "frontend-deploy"
       ECR_REGISTRY: "${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com"
-      ECR_REPOSITORY: "frontend-app"
+      ECR_REPOSITORY: "backend_app"
       ECS_CLUSTER_NAME: "application_cluster"
-      ECS_SERVICE_NAME: "frontend"
+      ECS_SERVICE_NAME: "backend"
       IMAGE_TAG: latest
-      S3_BUCKET: "deployment-bckt-europe"
+      S3_BUCKET: "deployment-bckt-europe-backend"
       TASK_DEFINITION_ARN: arn:aws:ecs:eu-north-1:038462779186:task-definition/frontend-task:16
 
     steps:
@@ -56,7 +56,7 @@ jobs:
         DEPLOYMENT_ID=$(aws deploy create-deployment \
           --application-name ${{ env.CODE_DEPLOY_APPLICATION }} \
           --deployment-group-name ${{ env.CODEDEPLOY_DEPLOYMENT_GROUP }} \
-          --revision "{\"revisionType\": \"S3\", \"s3Location\": {\"bucket\": \"${{ env.S3_BUCKET }}\", \"key\": \"appspec.yaml\", \"bundleType\": \"YAML\"}}" \
+          --revision "{\"revisionType\": \"S3\", \"s3Location\": {\"bucket\": \"${{ env.S3_BUCKET }}\", \"key\": \"backend_appspec.yaml\", \"bundleType\": \"YAML\"}}" \
           --region eu-north-1 \
           --query 'deploymentId' \
           --output text)
