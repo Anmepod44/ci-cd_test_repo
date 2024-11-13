@@ -16,7 +16,7 @@ jobs:
       CODEDEPLOY_DEPLOYMENT_GROUP: "frontend-deploy-group"
       CODE_DEPLOY_APPLICATION: "frontend-deploy"
       ECR_REGISTRY: "${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com"
-      ECR_REPOSITORY: "backend_app"
+      ECR_REPOSITORY: "backend-app"
       ECS_CLUSTER_NAME: "application_cluster"
       ECS_SERVICE_NAME: "backend"
       IMAGE_TAG: latest
