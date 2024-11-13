@@ -13,8 +13,8 @@ jobs:
     env:
       AWS_REGION: ${{ secrets.AWS_REGION }}
       AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
-      CODEDEPLOY_DEPLOYMENT_GROUP: "frontend-deploy-group"
-      CODE_DEPLOY_APPLICATION: "frontend-deploy"
+      CODEDEPLOY_DEPLOYMENT_GROUP: "backend-deploy-group"
+      CODE_DEPLOY_APPLICATION: "backend-deploy"
       ECR_REGISTRY: "${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com"
       ECR_REPOSITORY: "backend-app"
       ECS_CLUSTER_NAME: "application_cluster"
