@@ -1,10 +1,20 @@
-# Use the official Nginx image as the base image
-FROM nginx:alpine
+# Use an official Python runtime as a parent image
+FROM python:3.9-slim
 
-# Create a simple HTML page
-RUN echo "<!DOCTYPE html><html><head><title>Hello World</title></head><body style="background:blue"><h1>Hello, World!</h1><p>This is a dummy backend container 18/14:19</p></body></html>" > /usr/share/nginx/html/index.html
+# Set the working directory in the container
+WORKDIR /app
 
-# Expose port 80
+# Copy the current directory contents into the container at /app
+COPY . /app
+
+# Install any needed packages specified in requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Make port 5001 available to the world outside this container
 EXPOSE 5001
 
-# Nginx will automatically start serving the HTML file on port 80
+# Define environment variable
+ENV FLASK_APP=app.py
+
+# Run the Flask app when the container starts
+CMD ["python", "app.py"]
