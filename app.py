@@ -7,4 +7,4 @@ def home():
     return "<body style='color:red';width:100%;height:100%><h1>Hello, welcome back to the backend dummy page </h1></body>"
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=80)
+    app.run(host="0.0.0.0", port=5001)

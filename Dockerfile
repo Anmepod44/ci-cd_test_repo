@@ -5,6 +5,6 @@ FROM nginx:alpine
 RUN echo "<!DOCTYPE html><html><head><title>Hello World</title></head><body style="background:blue"><h1>Hello, World!</h1><p>This is a presentaton to Mr Cham</p></body></html>" > /usr/share/nginx/html/index.html
 
 # Expose port 80
-EXPOSE 80
+EXPOSE 5001
 
 # Nginx will automatically start serving the HTML file on port 80
