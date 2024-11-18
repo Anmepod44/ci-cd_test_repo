@@ -2,7 +2,7 @@
 FROM nginx:alpine
 
 # Create a simple HTML page
-RUN echo "<!DOCTYPE html><html><head><title>Hello World</title></head><body style="background:blue"><h1>Hello, World!</h1><p>This is a dummy backend container</p></body></html>" > /usr/share/nginx/html/index.html
+RUN echo "<!DOCTYPE html><html><head><title>Hello World</title></head><body style="background:blue"><h1>Hello, World!</h1><p>This is a dummy backend container 18/14:19</p></body></html>" > /usr/share/nginx/html/index.html
 
 # Expose port 80
 EXPOSE 5001
